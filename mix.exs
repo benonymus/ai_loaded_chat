@@ -46,7 +46,8 @@ defmodule AiLoadedChat.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, ">= 0.0.0"},
       {:bumblebee, "~> 0.4.2"},
-      {:exla, ">= 0.0.0"}
+      {:exla, ">= 0.0.0"},
+      {:stb_image, "~> 0.6"}
     ]
   end
 
