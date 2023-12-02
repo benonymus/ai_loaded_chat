@@ -1,5 +1,10 @@
 # AiLoadedChat
 
+Experimental chat experience with AI overload.
+You can converse with AI.
+You can enchance your own messages.
+You can generate an (ugly) avatar with AI. (Slow depending on the hardware available, and uses a lot of RAM.)
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies

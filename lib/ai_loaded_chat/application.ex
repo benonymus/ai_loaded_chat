@@ -5,16 +5,14 @@ defmodule AiLoadedChat.Application do
 
   use Application
 
-  # Nx.Serving.batched_run(ConversationServing, %{text: message, history: history})
-  # Nx.Serving.batched_run(ImageServing, "mouse")
-
   @impl true
   def start(_type, _args) do
     children = [
       AiLoadedChatWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:ai_loaded_chat, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: AiLoadedChat.PubSub},
-      # {Nx.Serving, serving: conversation_serving_setup(), name: ConversationServing},
+      {Nx.Serving, serving: conversation_serving_setup(), name: ConversationServing},
+      {Nx.Serving, serving: text_generation_serving_setup(), name: TextGenerationServing},
       {Nx.Serving, serving: image_serving_setup(), name: ImageServing},
       AiLoadedChatWeb.Endpoint
     ]
@@ -33,12 +31,16 @@ defmodule AiLoadedChat.Application do
     :ok
   end
 
+  # Nx.Serving.batched_run(ConversationServing, %{text: message, history: history})
+
   defp conversation_serving_setup do
-    {:ok, model_info} = Bumblebee.load_model({:hf, "facebook/blenderbot-400M-distill"})
-    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, "facebook/blenderbot-400M-distill"})
+    repository_id = "facebook/blenderbot-400M-distill"
+
+    {:ok, model_info} = Bumblebee.load_model({:hf, repository_id})
+    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, repository_id})
 
     {:ok, generation_config} =
-      Bumblebee.load_generation_config({:hf, "facebook/blenderbot-400M-distill"})
+      Bumblebee.load_generation_config({:hf, repository_id})
 
     Bumblebee.Text.conversation(
       model_info,
@@ -49,33 +51,50 @@ defmodule AiLoadedChat.Application do
     )
   end
 
-  # continue from here, try other models, try to get some image generated
+  # Nx.Serving.batched_run(TextGenerationServing, message)
 
+  defp text_generation_serving_setup do
+    repository_id = "gpt2"
+
+    {:ok, model_info} = Bumblebee.load_model({:hf, repository_id})
+    {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, repository_id})
+
+    {:ok, generation_config} =
+      Bumblebee.load_generation_config({:hf, repository_id})
+
+    generation_config = Bumblebee.configure(generation_config, max_new_tokens: 15)
+
+    Bumblebee.Text.generation(
+      model_info,
+      tokenizer,
+      generation_config,
+      compile: [batch_size: 4, sequence_length: 200],
+      defn_options: [compiler: EXLA]
+    )
+  end
+
+  # res = Nx.Serving.batched_run(ImageServing, "yellow car")
+  # [image] = res.results
+  # image = StbImage.from_nx(image.image)
+  # StbImage.write_file image, "test.png"
+  # :filename.basedir(:user_cache, "bumblebee")
   defp image_serving_setup do
     repository_id = "CompVis/stable-diffusion-v1-4"
 
-    IO.puts("tokenizer")
-
     {:ok, image_tokenizer} = Bumblebee.load_tokenizer({:hf, "openai/clip-vit-large-patch14"})
-    IO.puts("clip")
 
     {:ok, clip} = Bumblebee.load_model({:hf, repository_id, subdir: "text_encoder"})
-    IO.puts("unet")
 
     {:ok, unet} =
       Bumblebee.load_model({:hf, repository_id, subdir: "unet"},
         params_filename: "diffusion_pytorch_model.bin"
       )
 
-    IO.puts("vae")
-
     {:ok, vae} =
       Bumblebee.load_model({:hf, repository_id, subdir: "vae"},
         architecture: :decoder,
         params_filename: "diffusion_pytorch_model.bin"
       )
-
-    IO.puts("sched")
 
     {:ok, scheduler} = Bumblebee.load_scheduler({:hf, repository_id, subdir: "scheduler"})
 
@@ -85,7 +104,7 @@ defmodule AiLoadedChat.Application do
       vae,
       image_tokenizer,
       scheduler,
-      num_steps: 3,
+      num_steps: 5,
       num_images_per_prompt: 1,
       compile: [batch_size: 1, sequence_length: 10],
       defn_options: [compiler: EXLA]
