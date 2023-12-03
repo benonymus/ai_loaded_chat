@@ -1,9 +1,11 @@
 # AiLoadedChat
 
 Experimental chat experience with AI overload.
-You can converse with AI.
-You can enchance your own messages.
-You can generate an (ugly) avatar with AI. (Slow depending on the hardware available, and uses a lot of RAM.)
+- You can converse with AI.
+- You can enchance your own messages.
+- You can generate an (ugly) avatar with AI. (Slow depending on the hardware available, and uses a lot of RAM.)
+
+![image](https://github.com/benonymus/ai_loaded_chat/assets/14212931/6c110f9f-080f-4ab7-8ddd-27870979b019)
 
 To start your Phoenix server:
 
