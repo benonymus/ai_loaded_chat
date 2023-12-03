@@ -17,7 +17,7 @@ defmodule AiLoadedChatWeb.Router do
   scope "/", AiLoadedChatWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", MessageLive.New
   end
 
   # Other scopes may use custom stacks.

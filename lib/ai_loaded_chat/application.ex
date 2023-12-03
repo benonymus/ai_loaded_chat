@@ -46,7 +46,7 @@ defmodule AiLoadedChat.Application do
       model_info,
       tokenizer,
       generation_config,
-      compile: [batch_size: 4, sequence_length: 200],
+      compile: [batch_size: 4, sequence_length: 500],
       defn_options: [compiler: EXLA]
     )
   end
@@ -68,7 +68,7 @@ defmodule AiLoadedChat.Application do
       model_info,
       tokenizer,
       generation_config,
-      compile: [batch_size: 4, sequence_length: 200],
+      compile: [batch_size: 4, sequence_length: 50],
       defn_options: [compiler: EXLA]
     )
   end
